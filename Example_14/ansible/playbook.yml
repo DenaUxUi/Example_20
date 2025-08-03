@@ -1,0 +1,95 @@
+# Back-end application ansible-playbook
+---
+- name: "Back-end application"
+  hosts: ec2
+  vars_files:
+    - secrets.yml    
+  become: true
+  tasks:
+    - name: "Update apt cache"
+      apt:
+        update_cache: yes
+
+    - name: "Install Docker and pip"
+      apt:
+        name:
+          - docker.io
+          - python3-pip
+        state: present
+
+    - name: Install unzip (required for AWS CLI)
+      apt:
+        name: unzip
+        state: present
+        update_cache: true
+    - name: Ensure .aws directory exists for ubuntu
+      file:
+        path: "/home/ubuntu/.aws"
+        state: directory
+        mode: '0700'
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Set up AWS credentials
+      copy:
+        dest: "/home/ubuntu/.aws/credentials"
+        content: |
+          [default]
+          aws_access_key_id={{ aws_access_key_id }}
+          aws_secret_access_key={{ aws_secret_access_key }}
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+    - name: Set AWS region
+      copy:
+        dest: "/home/ubuntu/.aws/config"
+        content: |
+          [default]
+          region={{ aws_region }}
+          output=json
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+    - name: Download AWS CLI v2
+      get_url:
+        url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+        dest: "/tmp/awscliv2.zip"
+
+    - name: Unzip AWS CLI installer
+      unarchive:
+        src: "/tmp/awscliv2.zip"
+        dest: "/tmp"
+        remote_src: yes
+
+    - name: Install AWS CLI
+      command: "/tmp/aws/install"
+      args:
+        creates: /usr/local/bin/aws
+
+
+    - name: "Ensure Docker is running and enabled"
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: "Add ubuntu user to docker group"
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+    - name: Check AWS CLI version
+      become_user: ubuntu
+      command: aws --version
+      register: aws_version_output
+
+    - name: Print AWS CLI version
+      debug:
+        var: aws_version_output.stdout
+    - name: Install boto3 using apt
+      apt:
+        name: python3-boto3
+        state: present
+
