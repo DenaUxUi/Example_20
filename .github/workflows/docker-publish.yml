@@ -22,7 +22,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: ./Example_14
           push: true
           file: ./Example_14/Dockerfile
           tags: yourdevopsdena/helloapp:latest
