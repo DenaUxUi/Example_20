@@ -24,5 +24,6 @@ jobs:
         with:
           context: .
           push: true
+          file: ./Example_14/Dockerfile
           tags: yourdevopsdena/helloapp:latest
 
