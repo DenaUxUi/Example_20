@@ -17,15 +17,16 @@ FROM debian:bookworm-slim
 
 WORKDIR /app
 
+# 🛠 Установка сертификатов
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
 # Копируем бинарник
 COPY --from=builder /app/server .
 
 # Копируем статические файлы (если они нужны)
 COPY static/ ./static
 
-# Указываем порт, который слушает Go-сервер
 EXPOSE 8080
 
-# Запуск Go-сервера
 CMD ["./server"]
 
